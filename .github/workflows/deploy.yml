@@ -1,11 +1,11 @@
-name: Build and deploy Eva Admin
+name: Build Eva Admin Frontend
 
 on:
   push:
     branches: [main]
 
 concurrency:
-  group: eva-admin-production
+  group: eva-admin-front-build
   cancel-in-progress: false
 
 permissions:
@@ -16,8 +16,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      IMAGE: ghcr.io/jafari1995/eva-admin
-      ADMIN_DEPLOY_ENABLED: ${{ secrets.VPS_HOST != '' && secrets.VPS_USER != '' && secrets.VPS_SSH_KEY != '' && secrets.GHCR_TOKEN != '' }}
+      IMAGE: ghcr.io/abbasjafarinejad/eva-admin-front
     steps:
       - uses: actions/checkout@v4
 
@@ -42,24 +41,3 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:${{ github.sha }}
             ${{ env.IMAGE }}:latest
-
-      - name: Prepare SSH
-        if: ${{ env.ADMIN_DEPLOY_ENABLED == 'true' }}
-        env:
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
-
-      - name: Update admin container
-        if: ${{ env.ADMIN_DEPLOY_ENABLED == 'true' }}
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-        run: |
-          printf '%s\n' "$GHCR_TOKEN" | ssh -i ~/.ssh/id_ed25519 "${VPS_USER}@${VPS_HOST}" \
-            'docker login ghcr.io -u jafari1995 --password-stdin && cd /opt/eva && if docker compose config --services | grep -qx eva-admin; then docker compose pull eva-admin && docker compose up -d --no-deps eva-admin; else echo "Admin image published; deploy Eva backend infrastructure before starting the service."; fi'
