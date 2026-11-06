@@ -9,6 +9,7 @@ describe('admin nav', () => {
     expect(labels).toContain('کاربران');
     expect(labels).toContain('مصرف و هزینه');
     expect(labels).toContain('لاگ‌ها و خروجی‌ها');
+    expect(labels).toContain('پشتیبان‌ها');
     expect(labels).toContain('سلامت سرویس');
   });
 });

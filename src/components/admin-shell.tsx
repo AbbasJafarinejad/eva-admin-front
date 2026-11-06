@@ -4,7 +4,7 @@ import type React from "react";
 import { PropsWithChildren } from "react";
 import { usePathname } from "next/navigation";
 import { Card } from "@heroui/react";
-import { ChartBar, DownloadSimple, Heartbeat, House, Users } from "@phosphor-icons/react";
+import { ChartBar, DownloadSimple, Heartbeat, House, Users, Archive } from "@phosphor-icons/react";
 import clsx from "clsx";
 
 export type AdminNavItem = { href: string; label: string; Icon: (props: { size?: number }) => React.ReactElement };
@@ -15,6 +15,7 @@ export function getNavItems() {
     { href: "/users", label: "کاربران", Icon: (p) => <Users size={p.size ?? 18} /> },
     { href: "/ai-usage", label: "مصرف و هزینه", Icon: (p) => <ChartBar size={p.size ?? 18} /> },
     { href: "/turns", label: "لاگ‌ها و خروجی‌ها", Icon: (p) => <DownloadSimple size={p.size ?? 18} /> },
+    { href: "/backups", label: "پشتیبان‌ها", Icon: (p) => <Archive size={p.size ?? 18} /> },
     { href: "/service-health", label: "سلامت سرویس", Icon: (p) => <Heartbeat size={p.size ?? 18} /> },
   ];
   return items;
