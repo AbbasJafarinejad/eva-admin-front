@@ -30,6 +30,29 @@ const server = http.createServer((req, res) => {
     return send(res, 200, { "Content-Type": "application/json", "Cache-Control": "no-store" }, body);
   }
 
+  if (pathname === "/api/admin/overview") {
+    const body = JSON.stringify({
+      period_days: 30,
+      users_total: 1234,
+      active_users: 321,
+      rooms_total: 456,
+      messages_total: 7890,
+      ai_calls: 2345,
+      tokens_total: 123456,
+      latency_avg_ms: 210,
+      provider_cost_usd: 12.34,
+      cost_is_estimated: false,
+      silent_ai_calls: 12,
+      silent_ai_share: 5.1,
+      rooms_by_channel: { web: 300, telegram: 156 },
+    });
+    return send(res, 200, { "Content-Type": "application/json", "Cache-Control": "no-store" }, body);
+  }
+
+  if (pathname === "/api/admin/health") {
+    return send(res, 200, { "Content-Type": "application/json", "Cache-Control": "no-store" }, JSON.stringify({ status: "ok", db: "ok" }));
+  }
+
   if (pathname === "/api/admin/v1/prompt-turns.csv") {
     const csv = [
       "oid,ts,source,model,status,latency_ms,tokens,silence,routing_decision",
