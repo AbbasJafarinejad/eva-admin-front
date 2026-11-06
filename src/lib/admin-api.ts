@@ -7,7 +7,15 @@ export class AdminApiError extends Error {
 }
 
 export async function requestAdminApi(
-  path: "overview" | "ai-usage" | "prompt-logs" | "v1/prompt-turns" | "v1/prompt-turns.csv" | "v1/prompt-turns.jsonl" | `v1/prompt-turns/${string}`,
+  path:
+    | "overview"
+    | "ai-usage"
+    | "prompt-logs"
+    | "v1/prompt-turns"
+    | "v1/prompt-turns.csv"
+    | "v1/prompt-turns.jsonl"
+    | `v1/prompt-turns/${string}`
+    | "v1/prompt-logs/export",
   query = "",
   options?: { signal?: AbortSignal; headers?: Record<string, string> }
 ) {
@@ -34,7 +42,7 @@ export async function requestAdminApi(
     const url = `${base}/${path}${query}`;
     const isCsv = path.endsWith(".csv");
     const isJsonl = path.endsWith(".jsonl");
-    const isBinaryExport = isCsv || isJsonl || path === "prompt-logs";
+    const isBinaryExport = isCsv || isJsonl || path === "prompt-logs" || path === "v1/prompt-logs/export";
     response = await fetch(url, {
       headers: {
         "X-Admin-Key": key,

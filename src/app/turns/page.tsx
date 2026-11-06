@@ -19,6 +19,8 @@ type TurnMeta = {
 
 type ListResponse = { items?: TurnMeta[]; next_page?: number } | { error: string };
 
+import { AdminShell } from "@/components/admin-shell";
+
 export default function TurnsPage() {
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
@@ -79,14 +81,10 @@ export default function TurnsPage() {
   const exportJsonlHref = `/api/admin/turns/export?${query}&format=jsonl&scope=meta`;
 
   return (
-    <main className="min-h-dvh">
-      <header className="sticky top-0 z-10 border-b border-separator bg-background/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-2xl bg-accent/15 font-black text-accent">E</div>
-            <div><p className="font-extrabold">تحلیل گفت‌وگوها</p><p className="text-xs text-muted">نمایش فراداده؛ متن‌ها تنها با مجوز</p></div>
-          </div>
-          <div className="flex items-center gap-2">
+    <AdminShell title="لاگ‌ها و خروجی‌ها" subtitle="پیش‌نمایش فراداده؛ خروجی کامل بازه جداگانه دانلود می‌شود">
+      <div className="flex items-center justify-between gap-4 px-1 py-2">
+        <div />
+        <div className="flex items-center gap-2">
             {demo && <span className="rounded-xl bg-warning/20 px-3 py-1 text-xs font-bold text-warning">نمونهٔ آزمایشی</span>}
             <a href={exportCsvHref} className="inline-flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:opacity-90">
               <DownloadSimple size={18} />خروجی CSV
@@ -97,10 +95,9 @@ export default function TurnsPage() {
             <a href={`/api/admin/turns/export?${query}&format=jsonl&scope=full`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 text-sm font-semibold text-warning transition hover:border-warning/60" title="نیازمند مجوز ویژه و کنترل‌های امنیتی؛ متن/کانتکست کامل">
               <DownloadSimple size={18} />دانلود کامل بازه (متنی)
             </a>
-          </div>
         </div>
-      </header>
-      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
+      </div>
+      <div className="px-1">
         <Card className="mb-5 gap-3 rounded-2xl border border-separator bg-surface p-4">
           <div className="flex items-center gap-2 text-sm font-bold"><FunnelSimple size={18} />فیلترها</div>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -180,7 +177,7 @@ export default function TurnsPage() {
           <p className="mt-1 text-muted">برای جلوگیری از حملات فرمولی، هر مقدار CSV که با = یا + یا - یا @ شروع شود با ' پیشوند امن می‌شود.</p>
         </Card>
       </div>
-    </main>
+    </AdminShell>
   );
 }
 
