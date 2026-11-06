@@ -25,17 +25,19 @@ describe("admin users usage list proxy", () => {
     (hasAdminSession as any).mockResolvedValue(true);
     const upstream = new Response(JSON.stringify({ items: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
     const spy = vi.spyOn(global, "fetch" as any).mockResolvedValue(upstream as any);
-    const res = await GET(new Request("http://localhost/api/admin/users?from=2026-11-01&to=2026-11-07&model=gpt&source=web&search=ali&page=2&limit=25"));
+    const res = await GET(new Request("http://localhost/api/admin/users?from=2026-11-01&to=2026-11-07&model=gpt&channel=web&q=ali&sort=tokens&order=desc&page=2&page_size=25"));
     expect(res.status).toBe(200);
     const calledUrl = (spy.mock.calls[0] as any[])[0] as string;
     expect(calledUrl.startsWith(`${BASE_URL}/v1/users/usage?`)).toBe(true);
     expect(calledUrl).toContain("start=2026-10-31T20%3A30%3A00.000Z");
     expect(calledUrl).toContain("end=2026-11-07T20%3A30%3A00.000Z");
     expect(calledUrl).toContain("model=gpt");
-    expect(calledUrl).toContain("source=web");
-    expect(calledUrl).toContain("search=ali");
+    expect(calledUrl).toContain("channel=web");
+    expect(calledUrl).toContain("q=ali");
+    expect(calledUrl).toContain("sort=tokens");
+    expect(calledUrl).toContain("order=desc");
     expect(calledUrl).toContain("page=2");
-    expect(calledUrl).toContain("limit=25");
+    expect(calledUrl).toContain("page_size=25");
   });
 
   it("maps backend 404 to endpoint_unavailable", async () => {

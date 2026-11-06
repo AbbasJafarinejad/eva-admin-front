@@ -13,7 +13,7 @@ function parseYMD(value?: string | null) {
 function buildQuery(search: string) {
   const params = new URLSearchParams(search);
   const out = new URLSearchParams();
-  const allow = new Set(["from", "to", "model", "source", "search", "sort", "page", "limit"]);
+  const allow = new Set(["from", "to", "days", "model", "channel", "q", "sort", "order", "page", "page_size"]);
   for (const [k, v] of params.entries()) if (v && allow.has(k)) out.set(k, v);
   // Tehran to UTC [start,end)
   const pf = parseYMD(out.get("from"));
@@ -24,7 +24,7 @@ function buildQuery(search: string) {
   const endLocal = pt ? new Date(Date.UTC(pt.y, pt.mo - 1, pt.d + 1, 0, 0, 0)) : pf ? new Date(Date.UTC(pf.y, pf.mo - 1, pf.d + 1, 0, 0, 0)) : null;
   if (endLocal) out.set("end", new Date(endLocal.getTime() - offsetMinutes * 60_000).toISOString());
   out.delete("from"); out.delete("to");
-  if (!out.get("limit")) out.set("limit", "50");
+  if (!out.get("page_size")) out.set("page_size", "50");
   if (!out.get("page")) out.set("page", "1");
   const qs = out.toString();
   return qs ? `?${qs}` : "";
