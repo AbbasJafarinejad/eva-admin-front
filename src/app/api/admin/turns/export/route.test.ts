@@ -38,6 +38,8 @@ describe("turns export route", () => {
     expect(calledUrl).toContain("end=2026-11-06");
     expect(calledUrl).toContain("source=web");
     expect(calledUrl).toContain("limit=100");
+    expect(calledUrl).not.toContain("format=");
+    expect(calledUrl).not.toContain("scope=");
     const init = (spy.mock.calls[0] as any[])[1];
     expect(init.headers["Accept"]).toBe("*/*");
   });

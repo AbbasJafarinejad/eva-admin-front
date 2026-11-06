@@ -23,35 +23,43 @@ function buildQuery(search: string) {
   return qs ? `?${qs}` : "";
 }
 
-type JsonValue = null | string | number | boolean | JsonValue[] | { [k: string]: JsonValue };
+type MetaItem = {
+  oid?: string;
+  ts?: string;
+  source?: string;
+  model?: string;
+  status?: string;
+  latency_ms?: number;
+  tokens?: number;
+  silence?: boolean;
+  routing_decision?: string;
+};
 
-function stripSensitiveFromItem(item: Record<string, JsonValue>) {
-  const clone: Record<string, JsonValue> = {};
-  const sensitiveKeys = new Set(["prompt", "response", "messages", "input", "output", "content", "trace", "raw", "html"]);
-  for (const [k, v] of Object.entries(item)) {
-    if (sensitiveKeys.has(k)) continue;
-    if (typeof v === "string" && v.length > 512) continue; // avoid large text blobs in list
-    clone[k] = v;
-  }
-  return clone;
+function pickMeta(item: unknown): MetaItem {
+  const src = (item && typeof item === "object" ? (item as Record<string, unknown>) : {}) as Record<string, unknown>;
+  const out: MetaItem = {};
+  if (typeof src.oid === "string") out.oid = src.oid;
+  if (typeof src.ts === "string") out.ts = src.ts;
+  if (typeof src.source === "string") out.source = src.source;
+  if (typeof src.model === "string") out.model = src.model;
+  if (typeof src.status === "string") out.status = src.status;
+  if (typeof src.latency_ms === "number") out.latency_ms = src.latency_ms;
+  if (typeof src.tokens === "number") out.tokens = src.tokens;
+  if (typeof src.silence === "boolean") out.silence = src.silence;
+  if (typeof src.routing_decision === "string") out.routing_decision = src.routing_decision;
+  return out;
 }
 
-function sanitizeListPayload(payload: unknown): unknown {
-  if (Array.isArray(payload)) {
-    return payload.map((v) => (v && typeof v === "object" ? stripSensitiveFromItem(v as Record<string, JsonValue>) : v));
-  }
+function sanitizeListPayload(payload: unknown): { schema_version?: string; truncated?: boolean; items?: MetaItem[] } {
   if (payload && typeof payload === "object") {
     const obj = payload as Record<string, unknown>;
-    if (Array.isArray(obj.items)) {
-      return {
-        ...obj,
-        items: obj.items.map((v) =>
-          v && typeof v === "object" ? stripSensitiveFromItem(v as Record<string, JsonValue>) : v
-        ),
-      };
-    }
+    const result: { schema_version?: string; truncated?: boolean; items?: MetaItem[] } = {};
+    if (typeof obj.schema_version === "string") result.schema_version = obj.schema_version;
+    if (typeof obj.truncated === "boolean") result.truncated = obj.truncated;
+    if (Array.isArray(obj.items)) result.items = obj.items.map(pickMeta);
+    return result;
   }
-  return payload;
+  return {};
 }
 
 export async function GET(request: Request) {

@@ -6,14 +6,15 @@ import { Button, Card } from "@heroui/react";
 import { DownloadSimple, FunnelSimple } from "@phosphor-icons/react";
 
 type TurnMeta = {
-  id: string;
+  oid: string;
   ts?: string;
-  channel?: string;
+  source?: string;
   model?: string;
   status?: string;
   latency_ms?: number;
-  total_tokens?: number;
-  cost_usd?: number | null;
+  tokens?: number;
+  silence?: boolean;
+  routing_decision?: string;
 };
 
 type ListResponse = { items?: TurnMeta[]; next_page?: number } | { error: string };
@@ -93,7 +94,7 @@ export default function TurnsPage() {
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <label className="flex flex-col gap-1 text-sm"><span className="text-muted">از تاریخ</span><input type="date" value={from} onChange={(e: ChangeEvent<HTMLInputElement>) => setFrom(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
             <label className="flex flex-col gap-1 text-sm"><span className="text-muted">تا تاریخ</span><input type="date" value={to} onChange={(e: ChangeEvent<HTMLInputElement>) => setTo(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
-            <label className="flex flex-col gap-1 text-sm"><span className="text-muted">کانال</span><input placeholder="web/telegram/..." value={channel} onChange={(e: ChangeEvent<HTMLInputElement>) => setChannel(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
+            <label className="flex flex-col gap-1 text-sm"><span className="text-muted">منبع</span><input placeholder="web/telegram/..." value={channel} onChange={(e: ChangeEvent<HTMLInputElement>) => setChannel(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
             <label className="flex flex-col gap-1 text-sm"><span className="text-muted">وضعیت</span><input placeholder="ok/error" value={status} onChange={(e: ChangeEvent<HTMLInputElement>) => setStatus(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
             <label className="flex flex-col gap-1 text-sm"><span className="text-muted">مدل</span><input placeholder="gpt-4o-mini/..." value={model} onChange={(e: ChangeEvent<HTMLInputElement>) => setModel(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
             <label className="flex items-center gap-2 text-sm text-muted">
@@ -113,12 +114,13 @@ export default function TurnsPage() {
                 <tr className="[&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold [&>th]:text-muted">
                   <th>زمان</th>
                   <th>شناسه</th>
-                  <th>کانال</th>
+                  <th>منبع</th>
                   <th>مدل</th>
                   <th>وضعیت</th>
                   <th>تاخیر (ms)</th>
                   <th>توکن‌ها</th>
-                  <th>هزینه (USD)</th>
+                  <th>سکوت</th>
+                  <th>مسیر</th>
                 </tr>
               </thead>
               <tbody className="[&>tr:nth-child(even)]:bg-surface-secondary/40">
@@ -126,15 +128,16 @@ export default function TurnsPage() {
                   <tr><td colSpan={8} className="px-4 py-6 text-center text-muted">داده‌ای برای نمایش نیست.</td></tr>
                 )}
                 {data.map((t) => (
-                  <tr key={t.id} className="cursor-pointer hover:bg-accent/10" onClick={() => window.open(`/api/admin/turns/${encodeURIComponent(t.id)}`, "_blank", "noopener")}>
+                  <tr key={t.oid} className="cursor-pointer hover:bg-accent/10" onClick={() => window.location.assign(`/turns/${encodeURIComponent(t.oid)}`)}>
                     <td className="px-4 py-3 tabular-nums">{t.ts ? new Date(t.ts).toLocaleString("fa-IR") : "—"}</td>
-                    <td className="px-4 py-3 font-mono text-xs">{t.id}</td>
-                    <td className="px-4 py-3">{t.channel || "—"}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{t.oid}</td>
+                    <td className="px-4 py-3">{t.source || "—"}</td>
                     <td className="px-4 py-3">{t.model || "—"}</td>
                     <td className="px-4 py-3">{t.status || "—"}</td>
                     <td className="px-4 py-3 tabular-nums">{t.latency_ms ?? "—"}</td>
-                    <td className="px-4 py-3 tabular-nums">{t.total_tokens ?? "—"}</td>
-                    <td className="px-4 py-3 tabular-nums">{t.cost_usd == null ? "—" : `$${t.cost_usd}`}</td>
+                    <td className="px-4 py-3 tabular-nums">{t.tokens ?? "—"}</td>
+                    <td className="px-4 py-3">{t.silence == null ? "—" : (t.silence ? "بله" : "خیر")}</td>
+                    <td className="px-4 py-3">{t.routing_decision || "—"}</td>
                   </tr>
                 ))}
               </tbody>

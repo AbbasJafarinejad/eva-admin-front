@@ -27,7 +27,7 @@ describe("turns list route", () => {
     const upstreamBody = {
       truncated: true,
       items: [
-        { oid: "t1", ts: "2026-11-06T10:00:00Z", source: "web", model: "gpt", status: "ok", prompt: "secret", response: "text", latency_ms: 123, tokens: 10, silence: false, routing_decision: "direct" },
+        { oid: "t1", ts: "2026-11-06T10:00:00Z", source: "web", model: "gpt", status: "ok", prompt: "secret", response: "text", latency_ms: 123, tokens: 10, silence: false, routing_decision: "direct", nested: { secret: "x" } },
       ],
     };
     const spy = vi.spyOn(global, "fetch" as any).mockResolvedValue(new Response(JSON.stringify(upstreamBody), { status: 200 }) as any);
@@ -38,6 +38,7 @@ describe("turns list route", () => {
     expect(body.items?.[0]?.prompt).toBeUndefined();
     expect(body.items?.[0]?.response).toBeUndefined();
     expect(body.items?.[0]?.oid).toBe("t1");
+    expect((body.items?.[0] as any).nested).toBeUndefined();
     const calledUrl = (spy.mock.calls[0] as any[])[0] as string;
     expect(calledUrl.startsWith(`${BASE_URL}/v1/prompt-turns?`)).toBe(true);
     expect(calledUrl).toContain("start=2026-11-01");
