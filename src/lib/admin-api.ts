@@ -7,7 +7,7 @@ export class AdminApiError extends Error {
 }
 
 export async function requestAdminApi(
-  path: "overview" | "ai-usage" | "prompt-logs",
+  path: "overview" | "ai-usage" | "prompt-logs" | "turns",
   query = "",
   options?: { signal?: AbortSignal }
 ) {
@@ -31,8 +31,13 @@ export async function requestAdminApi(
         })())
       : timeoutSignal;
   try {
-    response = await fetch(`${base}/${path}${query}`, {
-      headers: { "X-Admin-Key": key, Accept: path === "prompt-logs" ? "application/zip" : "application/json" },
+    const url = `${base}/${path}${query}`;
+    const isTurnsExport = path === "turns" && query.startsWith("/export");
+    response = await fetch(url, {
+      headers: {
+        "X-Admin-Key": key,
+        Accept: path === "prompt-logs" ? "application/zip" : isTurnsExport ? "*/*" : "application/json",
+      },
       cache: "no-store",
       signal: finalSignal,
     });
@@ -46,6 +51,8 @@ export async function requestAdminApi(
     if (response.status === 401) throw new AdminApiError(502, "backend_auth_failed");
     // Preserve upstream 503 to indicate service unavailability distinctly from "not configured".
     if (response.status === 503) throw new AdminApiError(503, "backend_unavailable");
+    // For new, optional admin endpoints missing on backend, normalize 404 to a stable error
+    if (response.status === 404) throw new AdminApiError(503, "endpoint_unavailable");
     throw new AdminApiError(response.status);
   }
   return response;
