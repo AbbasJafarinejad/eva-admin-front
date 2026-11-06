@@ -54,6 +54,10 @@ export async function requestAdminApi(
     if (response.status === 401) throw new AdminApiError(502, "backend_auth_failed");
     // Preserve upstream 503 to indicate service unavailability distinctly from "not configured".
     if (response.status === 503) throw new AdminApiError(503, "backend_unavailable");
+    // Upstream 500: backend error; surface as bad gateway with safe code
+    if (response.status === 500) throw new AdminApiError(502, "backend_error");
+    // Upstream 403: forbidden for this admin key/context
+    if (response.status === 403) throw new AdminApiError(403, "forbidden");
     // For new, optional admin endpoints missing on backend, normalize 404 to a stable error
     if (response.status === 404) throw new AdminApiError(503, "endpoint_unavailable");
     throw new AdminApiError(response.status);
@@ -69,6 +73,8 @@ export function apiErrorResponse(error: unknown) {
       ? error.code
       : status === 401
         ? "unauthorized"
+        : status === 403
+          ? "forbidden"
         : status === 503
           ? "admin_not_configured"
           : status === 502

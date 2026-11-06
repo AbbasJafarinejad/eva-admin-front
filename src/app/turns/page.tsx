@@ -125,7 +125,7 @@ export default function TurnsPage() {
               </thead>
               <tbody className="[&>tr:nth-child(even)]:bg-surface-secondary/40">
                 {!loading && data.length === 0 && (
-                  <tr><td colSpan={8} className="px-4 py-6 text-center text-muted">داده‌ای برای نمایش نیست.</td></tr>
+                  <tr><td colSpan={9} className="px-4 py-6 text-center text-muted">داده‌ای برای نمایش نیست.</td></tr>
                 )}
                 {data.map((t) => (
                   <tr key={t.oid} className="cursor-pointer hover:bg-accent/10" onClick={() => window.location.assign(`/turns/${encodeURIComponent(t.oid)}`)}>
@@ -151,7 +151,7 @@ export default function TurnsPage() {
 
         <Card className="mt-6 rounded-2xl border border-separator bg-surface p-4 text-sm">
           <p className="font-bold">راهنمای خروجی داده</p>
-          <p className="mt-2 text-muted">CSV (UTF-8) و JSONL برای ابزارهای تحلیل. ستون‌ها (در صورت موجود بودن): id, ts, channel, model, status, latency_ms, prompt_tokens, completion_tokens, total_tokens, cost_usd.</p>
+          <p className="mt-2 text-muted">CSV (UTF-8) و JSONL برای ابزارهای تحلیل. ستون‌ها (در صورت موجود بودن): oid, ts (UTC), source, model, status, latency_ms, tokens, silence, routing_decision.</p>
           <p className="mt-1 text-muted">برای جلوگیری از حملات فرمولی، هر مقدار CSV که با = یا + یا - یا @ شروع شود با ' پیشوند امن می‌شود.</p>
         </Card>
       </div>

@@ -1,10 +1,6 @@
 import { apiErrorResponse, requestAdminApi } from "@/lib/admin-api";
 import { hasAdminSession } from "@/lib/session";
 
-const allowSensitiveExport =
-  (process.env.ADMIN_ALLOW_SENSITIVE_EXPORTS || "").toLowerCase() === "true" ||
-  (process.env.ADMIN_ALLOW_SENSITIVE_EXPORTS || "") === "1";
-
 function buildQuery(search: string) {
   const params = new URLSearchParams(search);
   const out = new URLSearchParams();
