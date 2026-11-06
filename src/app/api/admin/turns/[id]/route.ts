@@ -41,9 +41,13 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       (process.env.ADMIN_ALLOW_SENSITIVE_VIEWS || "").toLowerCase() === "true" ||
       (process.env.ADMIN_ALLOW_SENSITIVE_VIEWS || "") === "1";
     if (!allowSensitive) return Response.json({ error: "sensitive_view_disabled" }, { status: 403, headers: { "Cache-Control": "no-store" } });
+    const featureKey = process.env.ADMIN_FEATURE_KEY || "";
+    if (featureKey.length < 16) return Response.json({ error: "feature_key_unconfigured" }, { status: 403, headers: { "Cache-Control": "no-store" } });
     const { id } = await context.params;
     if (!id) return Response.json({ error: "bad_request" }, { status: 400, headers: { "Cache-Control": "no-store" } });
-    const upstream = await requestAdminApi("turns", `/${encodeURIComponent(id)}`);
+    const upstream = await requestAdminApi(`v1/prompt-turns/${encodeURIComponent(id)}`, "", {
+      headers: { "X-Admin-Feature-Key": featureKey },
+    });
     const body = await upstream.json().catch(() => ({}));
     const redacted = redactDeep(body as JsonValue);
     return Response.json(redacted, { headers: { "Cache-Control": "no-store" } });

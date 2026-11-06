@@ -4,11 +4,21 @@ import { hasAdminSession } from "@/lib/session";
 function buildQuery(search: string) {
   const params = new URLSearchParams(search);
   const out = new URLSearchParams();
-  // Forward only supported, non-sensitive filters to backend
-  const allow = new Set(["page", "page_size", "from", "to", "channel", "status", "model"]);
+  // Map UI filters to backend contract fields
+  const map: Record<string, string> = {
+    from: "start",
+    to: "end",
+    channel: "source",
+    status: "status",
+    model: "model",
+    silence: "silence",
+    limit: "limit",
+  };
   for (const [k, v] of params.entries()) {
-    if (allow.has(k) && v) out.set(k, v);
+    const key = map[k];
+    if (key && v) out.set(key, v);
   }
+  if (!out.get("limit")) out.set("limit", "200"); // backend default
   const qs = out.toString();
   return qs ? `?${qs}` : "";
 }
@@ -49,7 +59,7 @@ export async function GET(request: Request) {
     if (!(await hasAdminSession())) return Response.json({ error: "unauthorized" }, { status: 401, headers: { "Cache-Control": "no-store" } });
     const search = new URL(request.url).search;
     const query = buildQuery(search);
-    const upstream = await requestAdminApi("turns", query, { signal: request.signal });
+    const upstream = await requestAdminApi("v1/prompt-turns", query, { signal: request.signal });
     const body = await upstream.json().catch(() => ({}));
     const sanitized = sanitizeListPayload(body);
     return Response.json(sanitized, { headers: { "Cache-Control": "no-store" } });

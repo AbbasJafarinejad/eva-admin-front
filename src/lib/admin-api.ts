@@ -7,9 +7,9 @@ export class AdminApiError extends Error {
 }
 
 export async function requestAdminApi(
-  path: "overview" | "ai-usage" | "prompt-logs" | "turns",
+  path: "overview" | "ai-usage" | "prompt-logs" | "v1/prompt-turns" | "v1/prompt-turns.csv" | "v1/prompt-turns.jsonl" | `v1/prompt-turns/${string}`,
   query = "",
-  options?: { signal?: AbortSignal }
+  options?: { signal?: AbortSignal; headers?: Record<string, string> }
 ) {
   if (!(await hasAdminSession())) throw new AdminApiError(401);
   const base = (process.env.ADMIN_API_BASE_URL || "").replace(/\/$/, "");
@@ -32,12 +32,15 @@ export async function requestAdminApi(
       : timeoutSignal;
   try {
     const url = `${base}/${path}${query}`;
-    const isTurnsExport = path === "turns" && query.startsWith("/export");
+    const isCsv = path.endsWith(".csv");
+    const isJsonl = path.endsWith(".jsonl");
+    const isBinaryExport = isCsv || isJsonl || path === "prompt-logs";
     response = await fetch(url, {
       headers: {
         "X-Admin-Key": key,
-        Accept: path === "prompt-logs" ? "application/zip" : isTurnsExport ? "*/*" : "application/json",
-      },
+        Accept: path === "prompt-logs" ? "application/zip" : isBinaryExport ? "*/*" : "application/json",
+        ...(options?.headers ?? {}),
+      } as Record<string, string>,
       cache: "no-store",
       signal: finalSignal,
     });

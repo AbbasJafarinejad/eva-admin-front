@@ -24,12 +24,11 @@ export default function TurnsPage() {
   const [channel, setChannel] = useState<string>("");
   const [status, setStatus] = useState<string>("");
   const [model, setModel] = useState<string>("");
-  const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(50);
+  const [limit, setLimit] = useState<number>(50);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [data, setData] = useState<TurnMeta[]>([]);
-  const [nextPage, setNextPage] = useState<number | undefined>(undefined);
+  const [truncated, setTruncated] = useState<boolean>(false);
 
   const query = useMemo(() => {
     const p = new URLSearchParams();
@@ -38,10 +37,9 @@ export default function TurnsPage() {
     if (channel) p.set("channel", channel);
     if (status) p.set("status", status);
     if (model) p.set("model", model);
-    p.set("page", String(page));
-    p.set("page_size", String(pageSize));
+    p.set("limit", String(limit));
     return p.toString();
-  }, [from, to, channel, status, model, page, pageSize]);
+  }, [from, to, channel, status, model, limit]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -53,10 +51,10 @@ export default function TurnsPage() {
           const body = await res.json().catch(() => ({}));
           throw new Error(body?.error || "request_failed");
         }
-        const body = (await res.json()) as ListResponse;
+        const body = (await res.json()) as any as { items?: TurnMeta[]; truncated?: boolean } | { error: string };
         if ("error" in body) throw new Error(body.error);
-        setData(body.items || []);
-        setNextPage((body as any).next_page);
+        setData((body as any).items || []);
+        setTruncated(Boolean((body as any).truncated));
         setError("");
       } catch {
         setError("دریافت فهرست گفت‌وگوها ناموفق بود.");
@@ -98,15 +96,12 @@ export default function TurnsPage() {
             <label className="flex flex-col gap-1 text-sm"><span className="text-muted">کانال</span><input placeholder="web/telegram/..." value={channel} onChange={(e: ChangeEvent<HTMLInputElement>) => setChannel(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
             <label className="flex flex-col gap-1 text-sm"><span className="text-muted">وضعیت</span><input placeholder="ok/error" value={status} onChange={(e: ChangeEvent<HTMLInputElement>) => setStatus(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
             <label className="flex flex-col gap-1 text-sm"><span className="text-muted">مدل</span><input placeholder="gpt-4o-mini/..." value={model} onChange={(e: ChangeEvent<HTMLInputElement>) => setModel(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
-            <div className="flex gap-3">
-              <label className="flex items-center gap-2 text-sm text-muted">
-                اندازه صفحه
-                <select aria-label="اندازه صفحه" value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))} className="h-10 rounded-xl border border-separator bg-surface px-3">
-                  {[25, 50, 100].map((n) => <option key={n} value={n}>{n} در صفحه</option>)}
-                </select>
-              </label>
-              <Button variant="secondary" onPress={() => setPage(1)}>اعمال</Button>
-            </div>
+            <label className="flex items-center gap-2 text-sm text-muted">
+              حداکثر ردیف‌ها
+              <select aria-label="حداکثر ردیف‌ها" value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="h-10 rounded-xl border border-separator bg-surface px-3">
+                {[25, 50, 100, 200].map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
           </div>
         </Card>
 
@@ -145,12 +140,9 @@ export default function TurnsPage() {
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between gap-3 p-4">
-            <span className="text-xs text-muted">فهرست فقط فراداده را نشان می‌دهد. متن‌ها صرفاً با مجوز ویژه و ثبت رویداد قابل مشاهده است.</span>
-            <div className="flex items-center gap-2">
-              <Button isDisabled={page <= 1} onPress={() => setPage((p) => Math.max(1, p - 1))}>قبلی</Button>
-              <Button isDisabled={!nextPage} onPress={() => setPage((p) => p + 1)}>بعدی</Button>
-            </div>
+          <div className="flex items-center justify-between gap-3 p-4 text-xs text-muted">
+            <span>فهرست فقط فراداده را نشان می‌دهد. متن‌ها صرفاً با مجوز ویژه و ثبت رویداد قابل مشاهده است.</span>
+            {truncated && <span className="font-bold text-warning">نمایش دم‌آخر: داده‌ها به {limit} ردیف اخیر محدود شده‌اند.</span>}
           </div>
         </Card>
 
