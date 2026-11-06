@@ -113,6 +113,30 @@ describe("admin prompt-logs route", () => {
     expect(body).toEqual({ error: "backend_unavailable" });
   });
 
+  it("maps upstream 404 to 503 endpoint_unavailable", async () => {
+    (hasAdminSession as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    vi.spyOn(global, "fetch" as any).mockResolvedValue(new Response("missing", { status: 404 }) as any);
+    const res = await GET(new Request("http://localhost/api/admin/prompt-logs"));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: "endpoint_unavailable" });
+  });
+
+  it("maps upstream 500 to 502 backend_error", async () => {
+    (hasAdminSession as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    vi.spyOn(global, "fetch" as any).mockResolvedValue(new Response("boom", { status: 500 }) as any);
+    const res = await GET(new Request("http://localhost/api/admin/prompt-logs"));
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: "backend_error" });
+  });
+
+  it("preserves upstream 403 as forbidden", async () => {
+    (hasAdminSession as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    vi.spyOn(global, "fetch" as any).mockResolvedValue(new Response("nope", { status: 403 }) as any);
+    const res = await GET(new Request("http://localhost/api/admin/prompt-logs"));
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: "forbidden" });
+  });
+
   it("returns 502 backend_unavailable on network failure", async () => {
     (hasAdminSession as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(true);
     vi.spyOn(global, "fetch" as any).mockRejectedValue(new Error("network error"));
