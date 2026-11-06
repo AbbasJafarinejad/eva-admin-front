@@ -30,6 +30,7 @@ export default function TurnsPage() {
   const [error, setError] = useState<string>("");
   const [data, setData] = useState<TurnMeta[]>([]);
   const [truncated, setTruncated] = useState<boolean>(false);
+  const [demo, setDemo] = useState<boolean>(false);
 
   const query = useMemo(() => {
     const p = new URLSearchParams();
@@ -67,6 +68,13 @@ export default function TurnsPage() {
     return () => controller.abort();
   }, [query]);
 
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      setDemo(params.get("demo") === "1");
+    } catch {}
+  }, []);
+
   const exportCsvHref = `/api/admin/turns/export?${query}&format=csv&scope=meta`;
   const exportJsonlHref = `/api/admin/turns/export?${query}&format=jsonl&scope=meta`;
 
@@ -79,6 +87,7 @@ export default function TurnsPage() {
             <div><p className="font-extrabold">تحلیل گفت‌وگوها</p><p className="text-xs text-muted">نمایش فراداده؛ متن‌ها تنها با مجوز</p></div>
           </div>
           <div className="flex items-center gap-2">
+            {demo && <span className="rounded-xl bg-warning/20 px-3 py-1 text-xs font-bold text-warning">نمونهٔ آزمایشی</span>}
             <a href={exportCsvHref} className="inline-flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:opacity-90">
               <DownloadSimple size={18} />خروجی CSV
             </a>
