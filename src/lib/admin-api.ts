@@ -15,7 +15,8 @@ export async function requestAdminApi(
     | "v1/prompt-turns.csv"
     | "v1/prompt-turns.jsonl"
     | `v1/prompt-turns/${string}`
-    | "v1/prompt-logs/export",
+    | "v1/prompt-logs/export"
+    | "v1/users/usage",
   query = "",
   options?: { signal?: AbortSignal; headers?: Record<string, string> }
 ) {
