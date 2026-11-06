@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState, ChangeEvent } from "react";
 import { Button, Card } from "@heroui/react";
 import { DownloadSimple, FunnelSimple } from "@phosphor-icons/react";
+import { tehranDateString } from "@/lib/dates";
 
 type TurnMeta = {
   oid: string;
@@ -103,14 +104,14 @@ export default function TurnsPage() {
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="flex flex-wrap gap-2 text-xs">
               <button type="button" className="rounded-xl border border-separator px-3 py-2" onClick={() => {
-                const d = new Date(); const iso = d.toISOString().slice(0, 10); setFrom(iso); setTo(iso);
+                const d = new Date(); const iso = tehranDateString(d); setFrom(iso); setTo(iso);
               }}>امروز</button>
               <button type="button" className="rounded-xl border border-separator px-3 py-2" onClick={() => {
-                const d = new Date(); d.setDate(d.getDate() - 1); const iso = d.toISOString().slice(0, 10); setFrom(iso); setTo(iso);
+                const d = new Date(); d.setDate(d.getDate() - 1); const iso = tehranDateString(d); setFrom(iso); setTo(iso);
               }}>دیروز</button>
               <button type="button" className="rounded-xl border border-separator px-3 py-2" onClick={() => {
                 const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 6);
-                setFrom(start.toISOString().slice(0, 10)); setTo(end.toISOString().slice(0, 10));
+                setFrom(tehranDateString(start)); setTo(tehranDateString(end));
               }}>۷ روز گذشته</button>
               <span className="rounded-xl bg-surface-secondary px-3 py-2 text-muted">بازهٔ دلخواه:</span>
             </div>
