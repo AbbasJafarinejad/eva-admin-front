@@ -78,8 +78,8 @@ export default function TurnsPage() {
     } catch {}
   }, []);
 
-  const exportCsvHref = `/api/admin/turns/export?${query}&format=csv&scope=meta`;
-  const exportJsonlHref = `/api/admin/turns/export?${query}&format=jsonl&scope=meta`;
+  const exportCsvHref = `/api/admin/prompt-logs/export?${query}&format=csv&content=meta`;
+  const exportJsonlHref = `/api/admin/prompt-logs/export?${query}&format=jsonl&content=meta`;
 
   return (
     <AdminShell title="لاگ‌ها و خروجی‌ها" subtitle="پیش‌نمایش فراداده؛ خروجی کامل بازه جداگانه دانلود می‌شود">
@@ -93,7 +93,7 @@ export default function TurnsPage() {
             <a href={exportJsonlHref} className="inline-flex h-10 items-center gap-2 rounded-xl border border-separator bg-surface px-4 text-sm font-semibold transition hover:border-accent/50">
               <DownloadSimple size={18} />JSONL
             </a>
-            <a href={`/api/admin/turns/export?${query}&format=jsonl&scope=full`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 text-sm font-semibold text-warning transition hover:border-warning/60" title="نیازمند مجوز ویژه و کنترل‌های امنیتی؛ متن/کانتکست کامل">
+            <a href={`/api/admin/prompt-logs/export?${query}&format=jsonl&content=full`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 text-sm font-semibold text-warning transition hover:border-warning/60" title="نیازمند مجوز ویژه و کنترل‌های امنیتی؛ متن/کانتکست کامل">
               <DownloadSimple size={18} />دانلود کامل بازه (متنی)
             </a>
         </div>

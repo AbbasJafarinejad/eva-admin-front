@@ -34,8 +34,8 @@ describe("prompt-logs export route", () => {
     expect(res.headers.get("x-export-count")).toBe("2");
     const calledUrl = (spy.mock.calls[0] as any[])[0] as string;
     expect(calledUrl.startsWith(`${BASE_URL}/v1/prompt-logs/export?`)).toBe(true);
-    expect(calledUrl).toContain("start=2026-11-01");
-    expect(calledUrl).toContain("end=2026-11-08");
+    expect(calledUrl).toContain("start=2026-10-31T20%3A30%3A00.000Z");
+    expect(calledUrl).toContain("end=2026-11-08T20%3A30%3A00.000Z");
     expect(calledUrl).toContain("source=web");
     expect(calledUrl).toContain("model=gpt");
     expect(calledUrl).toContain("status=ok");
