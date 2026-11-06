@@ -73,7 +73,11 @@ export function Dashboard() {
       </header>
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-semibold text-accent">نمای کلی</p><h1 className="mt-1 text-2xl font-black sm:text-3xl">سلامت و آمار ایوا</h1><p className="mt-2 text-sm text-muted">آمار کلی؛ مصرف و فعالیت {number.format(days)} روز گذشته</p></div>
-          <div className="flex gap-2"><a href="/ai-usage" className="inline-flex h-10 items-center rounded-xl border border-separator bg-surface px-4 text-sm font-semibold transition hover:border-accent/50">مصرف هوش مصنوعی</a><a href="/api/admin/prompt-logs" className="inline-flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:opacity-90"><DownloadSimple size={18} />دانلود لاگ پرامپت</a></div>
+          <div className="flex gap-2">
+            <a href="/turns" className="inline-flex h-10 items-center rounded-xl border border-separator bg-surface px-4 text-sm font-semibold transition hover:border-accent/50">تحلیل گفت‌وگوها</a>
+            <a href="/ai-usage" className="inline-flex h-10 items-center rounded-xl border border-separator bg-surface px-4 text-sm font-semibold transition hover:border-accent/50">مصرف هوش مصنوعی</a>
+            <a href="/api/admin/prompt-logs" className="inline-flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:opacity-90"><DownloadSimple size={18} />دانلود لاگ پرامپت</a>
+          </div>
         </div>
         <Card className="mb-5 flex-row flex-wrap items-center gap-3 rounded-2xl border border-separator bg-surface p-4 text-sm">
           <span className={`size-2.5 rounded-full ${health?.status === "ok" ? "bg-success" : "bg-danger"}`} />

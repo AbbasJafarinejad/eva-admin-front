@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "پنل مدیریت ایوا",
   description: "پنل خصوصی مدیریت و پایش ایوا",
   robots: { index: false, follow: false },
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -7,9 +7,17 @@ export class AdminApiError extends Error {
 }
 
 export async function requestAdminApi(
-  path: "overview" | "ai-usage" | "prompt-logs",
+  path:
+    | "overview"
+    | "ai-usage"
+    | "prompt-logs"
+    | "v1/prompt-turns"
+    | "v1/prompt-turns.csv"
+    | "v1/prompt-turns.jsonl"
+    | `v1/prompt-turns/${string}`
+    | "v1/prompt-logs/export",
   query = "",
-  options?: { signal?: AbortSignal }
+  options?: { signal?: AbortSignal; headers?: Record<string, string> }
 ) {
   if (!(await hasAdminSession())) throw new AdminApiError(401);
   const base = (process.env.ADMIN_API_BASE_URL || "").replace(/\/$/, "");
@@ -31,8 +39,16 @@ export async function requestAdminApi(
         })())
       : timeoutSignal;
   try {
-    response = await fetch(`${base}/${path}${query}`, {
-      headers: { "X-Admin-Key": key, Accept: path === "prompt-logs" ? "application/zip" : "application/json" },
+    const url = `${base}/${path}${query}`;
+    const isCsv = path.endsWith(".csv");
+    const isJsonl = path.endsWith(".jsonl");
+    const isBinaryExport = isCsv || isJsonl || path === "prompt-logs" || path === "v1/prompt-logs/export";
+    response = await fetch(url, {
+      headers: {
+        "X-Admin-Key": key,
+        Accept: path === "prompt-logs" ? "application/zip" : isBinaryExport ? "*/*" : "application/json",
+        ...(options?.headers ?? {}),
+      } as Record<string, string>,
       cache: "no-store",
       signal: finalSignal,
     });
@@ -46,6 +62,12 @@ export async function requestAdminApi(
     if (response.status === 401) throw new AdminApiError(502, "backend_auth_failed");
     // Preserve upstream 503 to indicate service unavailability distinctly from "not configured".
     if (response.status === 503) throw new AdminApiError(503, "backend_unavailable");
+    // Upstream 500: backend error; surface as bad gateway with safe code
+    if (response.status === 500) throw new AdminApiError(502, "backend_error");
+    // Upstream 403: forbidden for this admin key/context
+    if (response.status === 403) throw new AdminApiError(403, "forbidden");
+    // For new, optional admin endpoints missing on backend, normalize 404 to a stable error
+    if (response.status === 404) throw new AdminApiError(503, "endpoint_unavailable");
     throw new AdminApiError(response.status);
   }
   return response;
@@ -59,6 +81,8 @@ export function apiErrorResponse(error: unknown) {
       ? error.code
       : status === 401
         ? "unauthorized"
+        : status === 403
+          ? "forbidden"
         : status === 503
           ? "admin_not_configured"
           : status === 502
