@@ -32,7 +32,11 @@ export async function requestAdminApi(
       : timeoutSignal;
   try {
     response = await fetch(`${base}/${path}${query}`, {
-      headers: { "X-Admin-Key": key, Accept: path === "prompt-logs" ? "application/zip" : "application/json" },
+      headers: {
+        "X-Admin-Key": key,
+        // Be permissive for binary export to avoid 406 when backend serves octet-stream or other zippy types.
+        Accept: path === "prompt-logs" ? "*/*" : "application/json",
+      },
       cache: "no-store",
       signal: finalSignal,
     });

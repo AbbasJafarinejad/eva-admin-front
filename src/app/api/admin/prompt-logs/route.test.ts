@@ -88,7 +88,7 @@ describe("admin prompt-logs route", () => {
     const text = await readBody(res);
     expect(text).toBe("abcdef");
     expect(fetchSpy).toHaveBeenCalledWith(`${BASE_URL}/prompt-logs`, expect.objectContaining({
-      headers: expect.objectContaining({ "X-Admin-Key": VALID_KEY, "Accept": "application/zip" }),
+      headers: expect.objectContaining({ "X-Admin-Key": VALID_KEY, "Accept": "*/*" }),
       cache: "no-store",
     }));
   });
@@ -135,6 +135,18 @@ describe("admin prompt-logs route", () => {
     expect(res.status).toBe(504);
     expect(await res.json()).toEqual({ error: "backend_timeout" });
     expect(fetchSpy).toHaveBeenCalled();
+  });
+
+  it("avoids 406 Not Acceptable by sending Accept */* for exports", async () => {
+    (hasAdminSession as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    // Simulate a backend that would otherwise serve octet-stream only
+    const upstream = new Response(new ReadableStream(), { status: 200, headers: { "Content-Type": "application/octet-stream" } });
+    const spy = vi.spyOn(global, "fetch" as any).mockResolvedValue(upstream as any);
+    const res = await GET(new Request("http://localhost/api/admin/prompt-logs"));
+    expect(res.status).toBe(200);
+    expect(spy).toHaveBeenCalledWith(`${BASE_URL}/prompt-logs`, expect.objectContaining({
+      headers: expect.objectContaining({ Accept: "*/*" }),
+    }));
   });
 });
 
