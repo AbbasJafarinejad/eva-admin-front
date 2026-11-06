@@ -94,6 +94,9 @@ export default function TurnsPage() {
             <a href={exportJsonlHref} className="inline-flex h-10 items-center gap-2 rounded-xl border border-separator bg-surface px-4 text-sm font-semibold transition hover:border-accent/50">
               <DownloadSimple size={18} />JSONL
             </a>
+            <a href={`/api/admin/turns/export?${query}&format=jsonl&scope=full`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 text-sm font-semibold text-warning transition hover:border-warning/60" title="نیازمند مجوز ویژه و کنترل‌های امنیتی؛ متن/کانتکست کامل">
+              <DownloadSimple size={18} />دانلود کامل بازه (متنی)
+            </a>
           </div>
         </div>
       </header>
@@ -101,6 +104,19 @@ export default function TurnsPage() {
         <Card className="mb-5 gap-3 rounded-2xl border border-separator bg-surface p-4">
           <div className="flex items-center gap-2 text-sm font-bold"><FunnelSimple size={18} />فیلترها</div>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-wrap gap-2 text-xs">
+              <button type="button" className="rounded-xl border border-separator px-3 py-2" onClick={() => {
+                const d = new Date(); const iso = d.toISOString().slice(0, 10); setFrom(iso); setTo(iso);
+              }}>امروز</button>
+              <button type="button" className="rounded-xl border border-separator px-3 py-2" onClick={() => {
+                const d = new Date(); d.setDate(d.getDate() - 1); const iso = d.toISOString().slice(0, 10); setFrom(iso); setTo(iso);
+              }}>دیروز</button>
+              <button type="button" className="rounded-xl border border-separator px-3 py-2" onClick={() => {
+                const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 6);
+                setFrom(start.toISOString().slice(0, 10)); setTo(end.toISOString().slice(0, 10));
+              }}>۷ روز گذشته</button>
+              <span className="rounded-xl bg-surface-secondary px-3 py-2 text-muted">بازهٔ دلخواه:</span>
+            </div>
             <label className="flex flex-col gap-1 text-sm"><span className="text-muted">از تاریخ</span><input type="date" value={from} onChange={(e: ChangeEvent<HTMLInputElement>) => setFrom(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
             <label className="flex flex-col gap-1 text-sm"><span className="text-muted">تا تاریخ</span><input type="date" value={to} onChange={(e: ChangeEvent<HTMLInputElement>) => setTo(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
             <label className="flex flex-col gap-1 text-sm"><span className="text-muted">منبع</span><input placeholder="web/telegram/..." value={channel} onChange={(e: ChangeEvent<HTMLInputElement>) => setChannel(e.target.value)} className="h-10 rounded-xl border border-separator bg-surface px-3" /></label>
