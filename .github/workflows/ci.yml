@@ -1,0 +1,34 @@
+name: ci
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: npm ci
+        run: npm ci
+      - name: npm test
+        run: npm run -s test
+      - name: npm build
+        run: npm run -s build
+      - name: Upload npm logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-logs
+          path: |
+            ~/.npm/_logs/*.log
+          if-no-files-found: ignore
+
