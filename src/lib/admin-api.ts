@@ -111,8 +111,16 @@ export async function requestAdminApi(
     if (response.status === 403) throw new AdminApiError(403, detail || "forbidden");
     if (response.status === 422) throw new AdminApiError(422, detail || "invalid_request");
     if (response.status === 404) {
+      // Prompt-log export uses 404 for disabled/missing files; never collapse those
+      // into a generic "endpoint unavailable" which hides the real cause.
+      if (normalizedPath === "prompt-logs") {
+        throw new AdminApiError(
+          404,
+          detail && KNOWN_404.has(detail) ? detail : detail || "prompt_logs_not_found",
+        );
+      }
       if (detail && KNOWN_404.has(detail)) throw new AdminApiError(404, detail);
-      throw new AdminApiError(503, "endpoint_unavailable");
+      throw new AdminApiError(503, detail || "endpoint_unavailable");
     }
     throw new AdminApiError(response.status, detail || "request_failed");
   }
