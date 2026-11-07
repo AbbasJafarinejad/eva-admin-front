@@ -88,9 +88,26 @@ describe("admin prompt-logs route", () => {
     const text = await readBody(res);
     expect(text).toBe("abcdef");
     expect(fetchSpy).toHaveBeenCalledWith(`${BASE_URL}/prompt-logs`, expect.objectContaining({
-      headers: expect.objectContaining({ "X-Admin-Key": VALID_KEY, "Accept": "application/zip" }),
+      headers: expect.objectContaining({ "X-Admin-Key": VALID_KEY, "Accept": "*/*" }),
       cache: "no-store",
     }));
+  });
+
+  it("avoids narrow Accept application/zip that can hide JSON error bodies", async () => {
+    (hasAdminSession as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    const upstream = new Response(new ReadableStream(), {
+      status: 200,
+      headers: { "Content-Type": "application/octet-stream" },
+    });
+    const spy = vi.spyOn(global, "fetch" as any).mockResolvedValue(upstream as any);
+    const res = await GET(new Request("http://localhost/api/admin/prompt-logs"));
+    expect(res.status).toBe(200);
+    expect(spy).toHaveBeenCalledWith(
+      `${BASE_URL}/prompt-logs`,
+      expect.objectContaining({
+        headers: expect.objectContaining({ Accept: "*/*" }),
+      }),
+    );
   });
 
   it("maps upstream 401 to 502 with safe code backend_auth_failed", async () => {
@@ -101,6 +118,32 @@ describe("admin prompt-logs route", () => {
     expect(res.status).toBe(502);
     const body = await res.json();
     expect(body).toEqual({ error: "backend_auth_failed" });
+  });
+
+  it("preserves prompt_logs_disabled instead of endpoint_unavailable", async () => {
+    (hasAdminSession as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    vi.spyOn(global, "fetch" as any).mockResolvedValue(
+      new Response(JSON.stringify({ detail: "prompt_logs_disabled" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      }) as any,
+    );
+    const res = await GET(new Request("http://localhost/api/admin/prompt-logs"));
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "prompt_logs_disabled" });
+  });
+
+  it("maps FastAPI Not Found on prompt-logs to prompt_logs_not_found", async () => {
+    (hasAdminSession as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    vi.spyOn(global, "fetch" as any).mockResolvedValue(
+      new Response(JSON.stringify({ detail: "Not Found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      }) as any,
+    );
+    const res = await GET(new Request("http://localhost/api/admin/prompt-logs"));
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "prompt_logs_not_found" });
   });
 
   it("preserves upstream 503 (service unavailable) distinctly", async () => {

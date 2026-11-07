@@ -90,8 +90,10 @@ export async function requestAdminApi(
       method,
       headers: {
         "X-Admin-Key": key,
-        Accept:
-          normalizedPath === "prompt-logs" ? "application/zip" : isBinaryExport ? "*/*" : "application/json",
+        // Use */* for ZIP/binary exports. A narrow Accept: application/zip can
+        // make some stacks reject JSON error bodies and surface as opaque 404s
+        // that the BFF then remaps to endpoint_unavailable.
+        Accept: isBinaryExport ? "*/*" : "application/json",
         ...(options?.headers ?? {}),
       } as Record<string, string>,
       cache: "no-store",
@@ -111,13 +113,16 @@ export async function requestAdminApi(
     if (response.status === 403) throw new AdminApiError(403, detail || "forbidden");
     if (response.status === 422) throw new AdminApiError(422, detail || "invalid_request");
     if (response.status === 404) {
-      // Prompt-log export uses 404 for disabled/missing files; never collapse those
-      // into a generic "endpoint unavailable" which hides the real cause.
-      if (normalizedPath === "prompt-logs") {
-        throw new AdminApiError(
-          404,
-          detail && KNOWN_404.has(detail) ? detail : detail || "prompt_logs_not_found",
-        );
+      // Prompt-log ZIP uses 404 for disabled/missing files; never collapse those
+      // (or FastAPI's generic "Not Found") into endpoint_unavailable.
+      if (normalizedPath === "prompt-logs" || normalizedPath === "prompt-logs/export") {
+        const code =
+          detail && KNOWN_404.has(detail)
+            ? detail
+            : detail === "Not Found"
+              ? "prompt_logs_not_found"
+              : detail || "prompt_logs_not_found";
+        throw new AdminApiError(404, code);
       }
       if (detail && KNOWN_404.has(detail)) throw new AdminApiError(404, detail);
       throw new AdminApiError(503, detail || "endpoint_unavailable");
