@@ -61,8 +61,8 @@ export async function requestAdminApi(
       : 15_000;
   const timeoutSignal = AbortSignal.timeout(defaultTimeoutMs);
   const finalSignal = options?.signal
-    ? "any" in AbortSignal
-      ? (AbortSignal as AbortSignal & { any: (s: AbortSignal[]) => AbortSignal }).any([
+    ? typeof (AbortSignal as unknown as { any?: unknown }).any === "function"
+      ? (AbortSignal as unknown as { any: (signals: AbortSignal[]) => AbortSignal }).any([
           options.signal,
           timeoutSignal,
         ])
