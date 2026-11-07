@@ -1,42 +1,126 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { AdminShell } from "@/components/admin-shell";
 import { useState } from "react";
+import { Button } from "@heroui/react";
+import { AdminShell } from "@/components/admin-shell";
+
+function backupMessage(code: string) {
+  if (code === "feature_disabled" || code === "feature_not_configured") {
+    return "قابلیت پشتیبان روی سرور فعال نیست. کلید ADMIN_FEATURE_FULL_BACKUP_KEY را تنظیم کن.";
+  }
+  if (code === "invalid_backup_key") {
+    return "رمز پشتیبان باید حداقل ۱۶ کاراکتر باشد.";
+  }
+  if (code === "pg_dump_not_available" || code === "pg_dump_failed") {
+    return "ابزار pg_dump روی سرور در دسترس نیست یا خطا داد.";
+  }
+  if (code === "backend_unavailable" || code === "admin_not_configured") {
+    return "ارتباط با بک‌اند برقرار نشد.";
+  }
+  if (code === "forbidden") return "مجوز پشتیبان‌گیری رد شد.";
+  return "ایجاد پشتیبان انجام نشد. دوباره تلاش کن.";
+}
 
 export default function BackupsPage() {
+  const [passphrase, setPassphrase] = useState("");
+  const [includeLogs, setIncludeLogs] = useState(true);
   const [creating, setCreating] = useState(false);
-  // Placeholder UI — no API calls yet; awaits backend contract for create/status/download
+  const [error, setError] = useState("");
+  const [lastOk, setLastOk] = useState("");
+
+  async function createBackup() {
+    setCreating(true);
+    setError("");
+    setLastOk("");
+    try {
+      const response = await fetch(
+        `/api/admin/backup?include_logs=${includeLogs ? "true" : "false"}`,
+        {
+          method: "POST",
+          headers: { "X-Admin-Backup-Key": passphrase },
+          cache: "no-store",
+        },
+      );
+      if (response.status === 401) {
+        window.location.assign("/login");
+        return;
+      }
+      if (!response.ok) {
+        let code = "request_failed";
+        try {
+          const body = (await response.json()) as { error?: string };
+          if (body.error) code = body.error;
+        } catch {
+          /* ignore */
+        }
+        setError(backupMessage(code));
+        return;
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition") || "";
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      const filename = match?.[1] || "eva-backup.eva.enc";
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setLastOk(`دانلود شد: ${filename}`);
+    } catch {
+      setError(backupMessage("request_failed"));
+    } finally {
+      setCreating(false);
+    }
+  }
+
   return (
-    <AdminShell title="پشتیبان‌ها" subtitle="پشتیبان‌گیری امن و قابل بازیابی">
+    <AdminShell title="پشتیبان‌ها" subtitle="پشتیبان‌گیری رمزگذاری‌شده از پایگاه داده و لاگ‌ها">
       <div className="space-y-4 rounded-2xl border border-separator bg-surface p-5 text-sm">
         <p className="text-muted">
-          پشتیبان‌گیری کامل با رمزنگاری در حال پیاده‌سازی سمت سرور است. این بخش ایجاد/وضعیت/دانلود پشتیبان رمزگذاری‌شده، بازهٔ پوشش و نگهداشت را پس از آماده‌شدن API نمایش می‌دهد.
+          خروجی به‌صورت فایل رمزگذاری‌شده AES-256-GCM دانلود می‌شود. رمز پشتیبان فقط برای همین دانلود
+          استفاده می‌شود و روی سرور ذخیره نمی‌شود؛ آن را جای امن نگه دار.
         </p>
+        <label className="grid gap-2">
+          <span className="font-semibold">رمز پشتیبان (حداقل ۱۶ کاراکتر)</span>
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={passphrase}
+            onChange={(event) => setPassphrase(event.target.value)}
+            className="h-11 rounded-xl border border-separator bg-background px-3"
+            placeholder="رمز قوی برای رمزگشایی بعدی"
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={includeLogs}
+            onChange={(event) => setIncludeLogs(event.target.checked)}
+          />
+          <span>لاگ پرامپت را هم داخل پشتیبان بگذار</span>
+        </label>
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            aria-disabled="true"
-            disabled
-            className="cursor-not-allowed rounded-xl border border-separator bg-surface-secondary px-4 py-2 font-semibold text-muted"
-            title="به‌زودی با قرارداد بک‌اند؛ اجرای پشتیبان‌گیری تنها با کلیک آگاهانه کاربر"
-            onClick={() => setCreating(true)}
+          <Button
+            onPress={() => void createBackup()}
+            isDisabled={creating || passphrase.length < 16}
+            className="rounded-xl bg-accent px-4 py-2 font-bold text-white"
           >
-            ایجاد پشتیبان جدید
-          </button>
-          <span className="text-xs text-warning">فاقد API فعال · بدون بارگذاری در مرورگر · کلید/رمز هرگز سمت کاربر</span>
+            {creating ? "در حال ساخت…" : "ایجاد و دانلود پشتیبان"}
+          </Button>
+          <span className="text-xs text-muted">کلید قابلیت فقط سمت سرور است؛ رمز را خودت انتخاب می‌کنی.</span>
         </div>
-        <div className="rounded-xl border border-separator p-4">
-          <p className="font-bold">آخرین وضعیت</p>
-          <ul className="mt-2 space-y-1 text-muted">
-            <li>آخرین موفق: —</li>
-            <li>اندازهٔ تقریبی: —</li>
-            <li>پوشش بازه: —</li>
-            <li>خطا/گزارش: —</li>
-          </ul>
-        </div>
+        {error && (
+          <div role="alert" className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-danger">
+            {error}
+          </div>
+        )}
+        {lastOk && (
+          <div className="rounded-xl border border-success/30 bg-success/10 p-3 text-success">{lastOk}</div>
+        )}
       </div>
     </AdminShell>
   );
 }
-
