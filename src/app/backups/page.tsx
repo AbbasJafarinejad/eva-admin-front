@@ -60,6 +60,13 @@ export default function BackupsPage() {
       const disposition = response.headers.get("Content-Disposition") || "";
       const match = disposition.match(/filename="?([^"]+)"?/);
       const filename = match?.[1] || "eva-backup.eva.enc";
+      const nonce = response.headers.get("X-Backup-Nonce") || "";
+      const tag = response.headers.get("X-Backup-Tag") || "";
+      const alg = response.headers.get("X-Backup-Alg") || "AES-256-GCM";
+      if (!nonce || !tag) {
+        setError("فایل رمزگذاری شد ولی nonce/tag برنگشت؛ بدون آن‌ها بازیابی ممکن نیست.");
+        return;
+      }
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -68,7 +75,21 @@ export default function BackupsPage() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setLastOk(`دانلود شد: ${filename}`);
+      // AES-GCM ciphertext alone is useless; keep nonce/tag beside the .enc file.
+      const metaName = filename.replace(/\.eva\.enc$/i, "") + ".meta.json";
+      const metaBlob = new Blob(
+        [JSON.stringify({ alg, nonce, tag, ciphertext: filename }, null, 2)],
+        { type: "application/json" },
+      );
+      const metaUrl = URL.createObjectURL(metaBlob);
+      const metaLink = document.createElement("a");
+      metaLink.href = metaUrl;
+      metaLink.download = metaName;
+      document.body.appendChild(metaLink);
+      metaLink.click();
+      metaLink.remove();
+      URL.revokeObjectURL(metaUrl);
+      setLastOk(`دانلود شد: ${filename} + ${metaName} (هر دو را نگه دار)`);
     } catch {
       setError(backupMessage("request_failed"));
     } finally {
@@ -80,8 +101,9 @@ export default function BackupsPage() {
     <AdminShell title="پشتیبان‌ها" subtitle="پشتیبان‌گیری رمزگذاری‌شده از پایگاه داده و لاگ‌ها">
       <div className="space-y-4 rounded-2xl border border-separator bg-surface p-5 text-sm">
         <p className="text-muted">
-          خروجی به‌صورت فایل رمزگذاری‌شده AES-256-GCM دانلود می‌شود. رمز پشتیبان فقط برای همین دانلود
-          استفاده می‌شود و روی سرور ذخیره نمی‌شود؛ آن را جای امن نگه دار.
+          خروجی به‌صورت فایل رمزگذاری‌شده AES-256-GCM به‌همراه یک فایل{" "}
+          <code className="text-xs">.meta.json</code> (حاوی nonce/tag) دانلود می‌شود. بدون هر دو فایل و
+          رمز پشتیبان، بازیابی ممکن نیست. رمز روی سرور ذخیره نمی‌شود؛ هر سه را جای امن نگه دار.
         </p>
         <label className="grid gap-2">
           <span className="font-semibold">رمز پشتیبان (حداقل ۱۶ کاراکتر)</span>
